@@ -1,8 +1,6 @@
 (ns com.kaicode.tweenie
   (:require [com.kaicode.tily :as util]))
 
-(enable-console-print!)
-
 (defn additional-distance [start-val end-val fraction]
   (let [delta (- end-val start-val)]
     (if (>= fraction 1)
