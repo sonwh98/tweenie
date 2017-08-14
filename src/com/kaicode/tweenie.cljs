@@ -22,16 +22,6 @@
                             (js/Math.pow (- 1 fraction-of-time) 5))]
     (+ start-val (additional-distance start-val end-val fraction-of-time))))
 
-(defmulti tween (fn [config-map]
-                  (let [start-val (:from config-map)
-                        type-start-val (type start-val)]
-                    (cond
-                      (= type-start-val cljs.core/PersistentVector) (if (= (-> start-val first type)
-                                                                           js/Number)
-                                                                      :vector
-                                                                      :matrix)
-                      (= type-start-val js/Number) :number))))
-
 (defmulti tween-val (fn [config-map delta-time]
                       (let [start-val (:from config-map)
                             type-start-val (type start-val)]
@@ -43,36 +33,45 @@
                           (= type-start-val js/Number) :number))))
 
 
+(defmethod tween-val :number [config-map delta-time]
+  (let [start-num (:from config-map)
+        end-num (:to config-map)
+        duration (:duration config-map)
+        easing-fn (:easing-fn config-map)
+
+        tweened-num (easing-fn start-num end-num duration delta-time)]
+    tweened-num))
+
 (defmethod tween-val :vector [config-map delta-time]
-  (let [from (:from config-map)
-        to (:to config-map)
+  (let [start-vector (:from config-map)
+        end-vector (:to config-map)
         duration (:duration config-map)
         easing-fn (:easing-fn config-map)
         
-        from-with-index (map-indexed (fn [i val] [i val]) from)
-        tweened-val (mapv (fn [[i start-val]]
-                            (let [end-val (to i)]
+        start-vector-with-index (map-indexed (fn [i val] [i val]) start-vector)
+        tweened-vec (mapv (fn [[i start-val]]
+                            (let [end-val (end-vector i)]
                               (easing-fn start-val end-val duration delta-time)))
-                          from-with-index)]
-    tweened-val))
+                          start-vector-with-index)]
+    tweened-vec))
 
-(defmethod tween :number [config-map]
-  (let [start-val (:from config-map)
-        end-val (:to config-map)
+(defmethod tween-val :matrix [config-map delta-time]
+  (let [start-matrix (:from config-map)
+        end-matrix (:to config-map)
         duration (:duration config-map)
         easing-fn (:easing-fn config-map)
-        on-update (:on-update config-map)
-        start-time (atom nil)]
-    (fn [clock-time]
-      (when (nil? @start-time)
-        (reset! start-time clock-time))
-      (let [time-from-start-time (- clock-time @start-time)
-            tweened-val (easing-fn start-val end-val duration time-from-start-time)]
-        (if (<= time-from-start-time duration)
-          (on-update tweened-val))
-        tweened-val))))
+        start-rows-with-index (map-indexed (fn [i row] [i row]) start-matrix)
+        tweened-vector (mapv (fn [[i start-row]]
+                               (let [start-row-with-index (util/with-index start-row)
+                                     end-row (end-matrix i)]
+                                 (mapv (fn [[j start-val]]
+                                         (let [end-val (end-row j)]
+                                           (easing-fn start-val end-val duration delta-time)))
+                                       start-row-with-index)))
+                             start-rows-with-index)]
+    tweened-vector))
 
-(defn tween2 [config-map]
+(defn tween [config-map]
   (let [duration (:duration config-map)
         on-update (:on-update config-map)
         start-time (atom nil)
@@ -81,7 +80,6 @@
       (when-not (nil? clock-time)
         (when (nil? @start-time)
           (reset! start-time clock-time))
-        (prn "tween2")
         (let [delta-time (- clock-time @start-time)
               tweened-val (tween-val config-map delta-time)]
           (if (<= delta-time duration)
@@ -89,37 +87,11 @@
             (reset! continue? false))))
       @continue?)))
 
-(defmethod tween :matrix [config-map]
-  (let [start-matrix (:from config-map)
-        end-matrix (:to config-map)
-        duration (:duration config-map)
-        easing-fn (:easing-fn config-map)
-        on-update (:on-update config-map)
-        start-time (atom nil)]
-    (fn [clock-time]
-      (when (nil? @start-time)
-        (reset! start-time clock-time))
-      (let [time-from-start-time (- clock-time @start-time)
-            start-rows-with-index (map-indexed (fn [i row] [i row]) start-matrix)
-            tweened-vector (mapv (fn [[i start-row]]
-                                   (let [start-row-with-index (util/with-index start-row)
-                                         end-row (end-matrix i)]
-                                     (mapv (fn [[j start-val]]
-                                             (let [end-val (end-row j)]
-                                               (easing-fn start-val end-val duration time-from-start-time)))
-                                           start-row-with-index)))
-                                 start-rows-with-index)]
-        (if (<= time-from-start-time duration)
-          (on-update tweened-vector))
-        tweened-vector))))
-
 (defn animate [tween-fn]
   ((fn animation-loop [clock-time]
      (let [continue? (tween-fn clock-time)]
-       (prn "continue1?" continue?)
        (when continue?
-         (js/requestAnimationFrame animation-loop)))
-     )))
+         (js/requestAnimationFrame animation-loop))))))
 
 
 ;; (def t (tween {:from      1 :to 1000
