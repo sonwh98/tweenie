@@ -32,7 +32,7 @@
                                                                       :matrix)
                       (= type-start-val js/Number) :number))))
 
-(defn gen-tween-val [config-map delta-time]
+(defn tween-val [config-map delta-time]
   (let [from (:from config-map)
         to (:to config-map)
         duration (:duration config-map)
@@ -61,8 +61,6 @@
           (on-update tweened-val))
         tweened-val))))
 
-
-
 (defmethod tween :vector [config-map]
   (let [start-vector (:from config-map)
         end-vector (:to config-map)
@@ -77,7 +75,7 @@
           (reset! start-time clock-time))
 
         (let [delta-time (- clock-time @start-time)
-              tweened-vector (gen-tween-val config-map delta-time)]
+              tweened-vector (tween-val config-map delta-time)]
           (if (<= delta-time duration)
             (on-update tweened-vector)
             (reset! continue? false))))
