@@ -54,19 +54,23 @@
         duration (:duration config-map)
         easing-fn (:easing-fn config-map)
         on-update (:on-update config-map)
-        start-time (atom nil)]
+        start-time (atom nil)
+        continue? (atom true)]
     (fn [clock-time]
-      (when (nil? @start-time)
-        (reset! start-time clock-time))
-      (let [time-from-start-time (- clock-time @start-time)
-            start-vector-with-index (map-indexed (fn [i val] [i val]) start-vector)
-            tweened-vector (mapv (fn [[i start-val]]
-                                   (let [end-val (end-vector i)]
-                                     (easing-fn start-val end-val duration time-from-start-time)))
-                                 start-vector-with-index)]
-        (if (<= time-from-start-time duration)
-          (on-update tweened-vector))
-        tweened-vector))))
+      (when-not (nil? clock-time)
+        (when (nil? @start-time)
+          (reset! start-time clock-time))
+
+        (let [delta-time (- clock-time @start-time)
+              start-vector-with-index (map-indexed (fn [i val] [i val]) start-vector)
+              tweened-vector (mapv (fn [[i start-val]]
+                                     (let [end-val (end-vector i)]
+                                       (easing-fn start-val end-val duration delta-time)))
+                                   start-vector-with-index)]
+          (if (<= delta-time duration)
+            (on-update tweened-vector)
+            (reset! continue? false))))
+      @continue?)))
 
 (defmethod tween :matrix [config-map]
   (let [start-matrix (:from config-map)
@@ -94,8 +98,10 @@
 
 (defn animate [tween-fn]
   ((fn animation-loop [clock-time]
-     (tween-fn clock-time)
-     (js/requestAnimationFrame animation-loop)
+     (let [continue? (tween-fn clock-time)]
+       (prn "continue?" continue?)
+       (when continue?
+         (js/requestAnimationFrame animation-loop)))
      )))
 
 
