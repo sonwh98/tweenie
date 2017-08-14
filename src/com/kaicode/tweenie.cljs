@@ -40,7 +40,7 @@
         on-update (:on-update config-map)
         start-time (atom nil)]
     (fn [clock-time]
-      (if (nil? @start-time)
+      (when (nil? @start-time)
         (reset! start-time clock-time))
       (let [time-from-start-time (- clock-time @start-time)
             tweened-val (easing-fn start-val end-val duration time-from-start-time)]
@@ -56,7 +56,7 @@
         on-update (:on-update config-map)
         start-time (atom nil)]
     (fn [clock-time]
-      (if (nil? @start-time)
+      (when (nil? @start-time)
         (reset! start-time clock-time))
       (let [time-from-start-time (- clock-time @start-time)
             start-vector-with-index (map-indexed (fn [i val] [i val]) start-vector)
@@ -76,7 +76,7 @@
         on-update (:on-update config-map)
         start-time (atom nil)]
     (fn [clock-time]
-      (if (nil? @start-time)
+      (when (nil? @start-time)
         (reset! start-time clock-time))
       (let [time-from-start-time (- clock-time @start-time)
             start-rows-with-index (map-indexed (fn [i row] [i row]) start-matrix)
