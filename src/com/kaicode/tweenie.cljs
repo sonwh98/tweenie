@@ -61,11 +61,9 @@
           (on-update tweened-val))
         tweened-val))))
 
+
 (defmethod tween :vector [config-map]
-  (let [start-vector (:from config-map)
-        end-vector (:to config-map)
-        duration (:duration config-map)
-        easing-fn (:easing-fn config-map)
+  (let [duration (:duration config-map)
         on-update (:on-update config-map)
         start-time (atom nil)
         continue? (atom true)]
@@ -108,7 +106,7 @@
 (defn animate [tween-fn]
   ((fn animation-loop [clock-time]
      (let [continue? (tween-fn clock-time)]
-       (prn "continue?" continue?)
+       (prn "continue1?" continue?)
        (when continue?
          (js/requestAnimationFrame animation-loop)))
      )))
