@@ -32,7 +32,18 @@
                                                                       :matrix)
                       (= type-start-val js/Number) :number))))
 
-(defn tween-val [config-map delta-time]
+(defmulti tween-val (fn [config-map delta-time]
+                      (let [start-val (:from config-map)
+                            type-start-val (type start-val)]
+                        (cond
+                          (= type-start-val cljs.core/PersistentVector) (if (= (-> start-val first type)
+                                                                               js/Number)
+                                                                          :vector
+                                                                          :matrix)
+                          (= type-start-val js/Number) :number))))
+
+
+(defmethod tween-val :vector [config-map delta-time]
   (let [from (:from config-map)
         to (:to config-map)
         duration (:duration config-map)
@@ -61,8 +72,7 @@
           (on-update tweened-val))
         tweened-val))))
 
-
-(defmethod tween :vector [config-map]
+(defn tween2 [config-map]
   (let [duration (:duration config-map)
         on-update (:on-update config-map)
         start-time (atom nil)
@@ -71,11 +81,11 @@
       (when-not (nil? clock-time)
         (when (nil? @start-time)
           (reset! start-time clock-time))
-
+        (prn "tween2")
         (let [delta-time (- clock-time @start-time)
-              tweened-vector (tween-val config-map delta-time)]
+              tweened-val (tween-val config-map delta-time)]
           (if (<= delta-time duration)
-            (on-update tweened-vector)
+            (on-update tweened-val)
             (reset! continue? false))))
       @continue?)))
 
