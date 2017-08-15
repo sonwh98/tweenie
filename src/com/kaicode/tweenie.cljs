@@ -48,7 +48,7 @@
         duration (:duration config-map)
         easing-fn (:easing-fn config-map)
         
-        start-vector-with-index (map-indexed (fn [i val] [i val]) start-vector)
+        start-vector-with-index (util/with-index start-vector)
         tweened-vec (mapv (fn [[i start-val]]
                             (let [end-val (end-vector i)]
                               (easing-fn start-val end-val duration delta-time)))
@@ -60,7 +60,7 @@
         end-matrix (:to config-map)
         duration (:duration config-map)
         easing-fn (:easing-fn config-map)
-        start-rows-with-index (map-indexed (fn [i row] [i row]) start-matrix)
+        start-rows-with-index (util/with-index start-matrix)
         tweened-vector (mapv (fn [[i start-row]]
                                (let [start-row-with-index (util/with-index start-row)
                                      end-row (end-matrix i)]
