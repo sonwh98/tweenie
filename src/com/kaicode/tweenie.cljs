@@ -77,21 +77,22 @@
         start-time (atom nil)
         continue? (atom true)]
     (fn [clock-time]
-      (when-not (nil? clock-time)
-        (when (nil? @start-time)
-          (reset! start-time clock-time))
-        (let [delta-time (- clock-time @start-time)
-              tweened-val (tween-val config-map delta-time)]
-          (if (<= delta-time duration)
-            (on-update tweened-val)
-            (reset! continue? false))))
+      (when (nil? @start-time)
+        (reset! start-time clock-time))
+      (let [delta-time (- clock-time @start-time)
+            tweened-val (tween-val config-map delta-time)]
+        (if (<= delta-time duration)
+          (on-update tweened-val)
+          (reset! continue? false)))
       @continue?)))
 
 (defn animate [tween-fn]
   ((fn animation-loop [clock-time]
      (let [continue? (tween-fn clock-time)]
        (when continue?
-         (js/requestAnimationFrame animation-loop))))))
+         (js/requestAnimationFrame animation-loop))))
+   (js/performance.now)
+   ))
 
 
 ;; (def t (tween {:from      1 :to 1000
