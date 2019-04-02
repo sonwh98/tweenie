@@ -1,7 +1,7 @@
 # Tweenie
 
 A tweening library written in ClojureScript. Can be used for CSS animation or use cases where a range
-of values needs to be tweened.
+of values needs to be tweened. Can tween single value, vector or [matrix](https://github.com/sonwh98/morpheus)
 
 
 # Install 
